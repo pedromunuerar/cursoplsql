@@ -41,8 +41,5 @@ INSERT INTO personas VALUES (
    lista_telefonos_t(telefono_t('Móvil','600123123'), telefono_t('Fijo','911223344'))
 );
 
-
-sql
-Copiar código
 SELECT p.nombre, t.numero
 FROM personas p, TABLE(p.telefonos) t;

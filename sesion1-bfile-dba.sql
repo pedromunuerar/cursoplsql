@@ -1,0 +1,6 @@
+-- Como SYS, crear directorio virtual
+CREATE OR REPLACE DIRECTORY ARCHIVOS_DIR AS '/opt/oracle/archivos';
+
+-- Dar permisos al usuario
+GRANT READ ON DIRECTORY ARCHIVOS_DIR TO C##DEVUSER1;
+GRANT READ ON DIRECTORY ARCHIVOS_DIR TO C##DEVUSER2;

@@ -38,9 +38,11 @@ CREATE OR REPLACE PROCEDURE crear_archivo_y_bfile (
 ) IS
     v_archivo UTL_FILE.FILE_TYPE;
     v_bfile BFILE;
+    v_directorio varchar2(50);
 BEGIN
+    v_directorio:='DATA_PUMP_DIR';
     -- 1. Crear archivo físico usando UTL_FILE
-    v_archivo := UTL_FILE.FOPEN('ARCHIVOS_DIR', p_nombre_archivo, 'W');
+    v_archivo := UTL_FILE.FOPEN(v_directorio, p_nombre_archivo, 'W');
     UTL_FILE.PUT_LINE(v_archivo, p_contenido);
     UTL_FILE.FCLOSE(v_archivo);
     
@@ -49,7 +51,7 @@ BEGIN
     -- 2. Insertar referencia BFILE a la tabla
     INSERT INTO documentos_externos (nombre, descripcion, archivo)
     VALUES (p_nombre_archivo, 'Prueba: '||p_nombre_archivo, 
-        BFILENAME('ARCHIVOS_DIR', p_nombre_archivo));
+        BFILENAME(v_directorio, p_nombre_archivo));
     
     COMMIT;
     
@@ -63,12 +65,17 @@ EXCEPTION
         RAISE;
 END crear_archivo_y_bfile;
 
-BEGIN
-END;
 
 /
 -- Ejecutar procedimiento para crear archivos
 BEGIN
-    crear_archivo_y_bfile('documento_curso.txt', 
+    crear_archivo_y_bfile('documentocurso.txt', 
         'Este es un archivo creado desde PL/SQL para el curso de Oracle.');
 END;
+
+
+/
+--Consultamos otra vez
+SELECT d.id, d.nombre,
+       DBMS_LOB.FILEEXISTS(d.archivo) as ruta_archivo
+FROM documentos_externos d;

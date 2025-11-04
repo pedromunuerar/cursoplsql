@@ -87,3 +87,31 @@ JSON_TABLE(p.datos, '$'
         )
     )
 ) jt;
+
+/*Sintaxis Básica de JSON Path*/
+1. Referenciar elementos
+sql
+-- $ = raíz del documento
+JSON_VALUE(datos, '$')                    -- Todo el documento
+JSON_VALUE(datos, '$.envio')              -- Campo "envio" en raíz
+JSON_VALUE(datos, '$.items')              -- Array "items"
+2. Acceder a objetos y arrays
+sql
+-- Notación de punto para objetos
+JSON_VALUE(datos, '$.cliente.nombre')     -- Objetos anidados
+JSON_VALUE(datos, '$.direccion.ciudad')   -- Campos anidados
+
+-- Notación de corchetes para arrays
+JSON_VALUE(datos, '$.items[0]')           -- Primer elemento del array
+JSON_VALUE(datos, '$.items[1]')           -- Segundo elemento
+JSON_VALUE(datos, '$.items[last]')        -- Último elemento
+JSON_VALUE(datos, '$.items[0].producto')  -- Campo dentro del primer elemento
+3. Wildcards y múltiples elementos
+sql
+-- * = cualquier elemento
+JSON_QUERY(datos, '$.items[*]')           -- Todos los elementos del array
+JSON_QUERY(datos, '$.items[*].producto')  -- Todos los productos
+JSON_VALUE(datos, '$.items[0].*')         -- Todos los campos del primer item
+
+-- Rangos
+JSON_QUERY(datos, '$.items[0 to 2]')      -- Elementos 0, 1 y 2

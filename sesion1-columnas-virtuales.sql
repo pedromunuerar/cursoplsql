@@ -102,3 +102,41 @@ CREATE INDEX idx_func_total ON ventas_complejo(
 -- Consulta usando la función en el ORDER BY
 SELECT * FROM ventas_complejo 
 ORDER BY calcular_total_complejo(precio_unitario, cantidad);
+
+--SOLUCION OPTIMIZACION de 26s a 0.078s 30000
+-- Crear trigger para INSERT y UPDATE
+CREATE OR REPLACE TRIGGER trg_ventas_complejo_total
+    BEFORE INSERT OR UPDATE OF precio_unitario, cantidad ON ventas_complejo
+    FOR EACH ROW
+BEGIN
+    IF :NEW.precio_unitario IS NOT NULL AND :NEW.cantidad IS NOT NULL THEN
+        :NEW.total := calcular_total_complejo(:NEW.precio_unitario, :NEW.cantidad);
+    ELSE
+        :NEW.total := 0;
+    END IF;
+END;
+/
+
+
+begin
+FOR i IN 1..10000 LOOP
+insert into ventas_complejo (precio_unitario, cantidad) values (4,5);
+insert into ventas_complejo (precio_unitario, cantidad) values (4,5);
+insert into ventas_complejo (precio_unitario, cantidad) values (3,5);
+insert into ventas_complejo (precio_unitario, cantidad) values (1,5);
+insert into ventas_complejo (precio_unitario, cantidad) values (4,50);
+insert into ventas_complejo (precio_unitario, cantidad) values (4,5);
+insert into ventas_complejo (precio_unitario, cantidad) values (4,5);
+insert into ventas_complejo (precio_unitario, cantidad) values (3,5);
+insert into ventas_complejo (precio_unitario, cantidad) values (1,5);
+insert into ventas_complejo (precio_unitario, cantidad) values (4,50);
+end loop;
+end;
+/
+
+select * from ventas_complejo order by total; 
+
+-- Crear índice para optimizar consultas
+CREATE INDEX idx_ventas_complejo_total ON ventas_complejo(total);
+
+select * from ventas_complejo order by total; -

@@ -51,6 +51,7 @@ COMMIT;
 /
 select count(*) from empleados;
 /
+--Query 1
 SELECT e.nombre, e.salario
 FROM empleados e
 WHERE salario > (
@@ -60,6 +61,7 @@ WHERE salario > (
 )
 and  e.departamento_id=1;  
 
+--Query 2
 with empleados_filtrado as (select EMPLEADO_ID,
 NOMBRE,
 SALARIO,
@@ -72,7 +74,7 @@ WHERE salario > (
   WHERE s.departamento_id = e.departamento_id
 ); --
 
-
+--Query 3
 WITH departamento_promedio AS (
     SELECT AVG(salario) as avg_salario
     FROM empleados 

@@ -84,38 +84,17 @@ FROM empleados e
 WHERE e.departamento_id = 1
 AND e.salario > dp.avg_salario; --
 
----------------------------------------
-/*Ahora a ver lo real*/
 
-SELECT /*+ NO_REWRITE */  e.nombre, e.salario
-FROM empleados e
-WHERE salario > (
-  SELECT /*+ NO_REWRITE */  AVG(s.salario)
-  FROM empleados s
-  WHERE s.departamento_id = e.departamento_id
-)
-and  e.departamento_id=1;
-/
-with empleados_filtrado as (select /*+ NO_REWRITE */  EMPLEADO_ID,
-NOMBRE,
-SALARIO,
-DEPARTAMENTO_ID from empleados where departamento_id=1)
-SELECT /*+ NO_REWRITE */ e.nombre, e.salario
-FROM empleados_filtrado e
-WHERE salario > (
-  SELECT AVG(s.salario)
-  FROM empleados_filtrado s
-  WHERE s.departamento_id = e.departamento_id
-);
+--------------------
 
-/
-WITH departamento_promedio AS (
-    SELECT /*+ NO_REWRITE */ AVG(salario) as avg_salario
-    FROM empleados 
-    WHERE departamento_id = 1  --  Calcula el promedio UNA vez
-)
-SELECT /*+ NO_REWRITE */  e.nombre, e.salario
-FROM empleados e
- CROSS JOIN departamento_promedio dp
-WHERE e.departamento_id = 1
-AND e.salario > dp.avg_salario;
+ALTER SESSION SET QUERY_REWRITE_ENABLED = FALSE;
+ALTER SESSION SET "_optimizer_squ_bottomup" = FALSE;
+ALTER SESSION SET "_optimizer_cost_based_transformation" = OFF;
+
+--Ahora lanzamos las mismas queries.... 
+
+ALTER SESSION SET QUERY_REWRITE_ENABLED = TRUE;
+ALTER SESSION SET "_optimizer_squ_bottomup" = TRUE;
+ALTER SESSION SET "_optimizer_cost_based_transformation" = ON;
+
+

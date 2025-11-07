@@ -84,3 +84,24 @@ WITH rec_emps (id, nombre, jefe_id, nivel) AS (
   FROM empleados e
   JOIN rec_emps r ON e.jefe_id = r.id
 )
+SELECT * FROM rec_emps ORDER BY nivel;
+
+
+---Añadimos unos cambios
+WITH rec_emps (id, nombre, jefe_id, nivel, ruta) AS (
+  SELECT id, nombre, jefe_id, 1, nombre
+  FROM empleados
+  WHERE jefe_id IS NULL
+  UNION ALL
+  SELECT e.id, e.nombre, e.jefe_id, r.nivel + 1, r.ruta || ' -> ' || e.nombre
+  FROM empleados e
+  JOIN rec_emps r ON e.jefe_id = r.id
+)
+SELECT 
+    id,
+    LPAD(' ', (nivel-1)*3) || nombre AS nombre_indentado,
+    jefe_id,
+    nivel,
+    ruta
+FROM rec_emps 
+ORDER BY nivel, id;

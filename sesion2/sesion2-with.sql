@@ -107,7 +107,7 @@ FROM rec_emps
 ORDER BY nivel, id;
 
 /**Formas de explotarlo**/
---1. Jerarquía Completa (Corregido)
+--1. Jerarquía Completa 
 WITH jerarquia_empleados (id, nombre, jefe_id, nivel, ruta) AS (
     -- Raíz: empleados sin jefe
     SELECT id, nombre, jefe_id, 1, nombre
@@ -128,7 +128,7 @@ SELECT
 FROM jerarquia_empleados
 ORDER BY nivel, id;
 
---2. Subordinados de un Jefe Específico (Corregido)
+--2. Subordinados de un Jefe Específico
 WITH subordinados_de (id, nombre, jefe_id, nivel) AS (
     SELECT id, nombre, jefe_id, 1
     FROM empleados
@@ -140,7 +140,7 @@ WITH subordinados_de (id, nombre, jefe_id, nivel) AS (
 )
 SELECT * FROM subordinados_de;
 
---3. Cadena de Mando (Corregido)
+--3. Cadena de Mando
 WITH cadena_mando (id, nombre, jefe_id, nivel) AS (
     SELECT id, nombre, jefe_id, 1
     FROM empleados

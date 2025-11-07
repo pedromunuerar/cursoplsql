@@ -105,3 +105,77 @@ SELECT
     ruta
 FROM rec_emps 
 ORDER BY nivel, id;
+
+/**Formas de explotarlo**/
+--1. Jerarquía Completa (Corregido)
+WITH jerarquia_empleados (id, nombre, jefe_id, nivel, ruta) AS (
+    -- Raíz: empleados sin jefe
+    SELECT id, nombre, jefe_id, 1, nombre
+    FROM empleados
+    WHERE jefe_id IS NULL
+    UNION ALL
+    -- Parte recursiva: subordinados
+    SELECT e.id, e.nombre, e.jefe_id, j.nivel + 1, 
+           j.ruta || ' -> ' || e.nombre
+    FROM empleados e
+    JOIN jerarquia_empleados j ON e.jefe_id = j.id
+)
+SELECT 
+    id,
+    LPAD(' ', (nivel-1)*4) || nombre AS estructura,
+    nivel,
+    ruta
+FROM jerarquia_empleados
+ORDER BY nivel, id;
+
+--2. Subordinados de un Jefe Específico (Corregido)
+WITH subordinados_de (id, nombre, jefe_id, nivel) AS (
+    SELECT id, nombre, jefe_id, 1
+    FROM empleados
+    WHERE id = 2  -- Ana López
+    UNION ALL
+    SELECT e.id, e.nombre, e.jefe_id, s.nivel + 1
+    FROM empleados e
+    JOIN subordinados_de s ON e.jefe_id = s.id
+)
+SELECT * FROM subordinados_de;
+
+--3. Cadena de Mando (Corregido)
+WITH cadena_mando (id, nombre, jefe_id, nivel) AS (
+    SELECT id, nombre, jefe_id, 1
+    FROM empleados
+    WHERE id = 12  -- David Ortiz
+    UNION ALL
+    SELECT e.id, e.nombre, e.jefe_id, c.nivel + 1
+    FROM empleados e
+    JOIN cadena_mando c ON e.id = c.jefe_id
+)
+SELECT 
+    nivel,
+    nombre,
+    CASE 
+        WHEN nivel = 1 THEN 'Empleado'
+        WHEN nivel = 2 THEN 'Jefe Directo'
+        ELSE 'Superior Nivel ' || (nivel-2)
+    END AS tipo
+FROM cadena_mando
+ORDER BY nivel DESC;
+
+--4. Estadísticas por Nivel 
+WITH jerarquia (id, nombre, jefe_id, nivel, salario) AS (
+    SELECT id, nombre, jefe_id, 1, salario
+    FROM empleados
+    WHERE jefe_id IS NULL
+    UNION ALL
+    SELECT e.id, e.nombre, e.jefe_id, j.nivel + 1, e.salario
+    FROM empleados e
+    JOIN jerarquia j ON e.jefe_id = j.id
+)
+SELECT 
+    nivel,
+    COUNT(*) as cantidad_empleados,
+    ROUND(AVG(salario), 2) as salario_promedio,
+    SUM(salario) as total_salarios
+FROM jerarquia
+GROUP BY nivel
+ORDER BY nivel;

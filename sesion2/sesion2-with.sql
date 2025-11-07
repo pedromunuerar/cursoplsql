@@ -42,3 +42,45 @@ WITH empleados_activos AS (
 SELECT nombre, salario
 FROM empleados_activos
 WHERE salario > 4000;
+
+/********************************************************/
+--Recursivo
+
+CREATE TABLE empleados (
+    id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    salario NUMBER(10,2),
+    activo CHAR(1),
+    jefe_id NUMBER REFERENCES empleados(id),
+    departamento VARCHAR2(50),
+    puesto VARCHAR2(50)
+);
+
+BEGIN
+INSERT INTO empleados VALUES (1, 'Carlos Mendoza', 150000, 'S', NULL, 'Dirección', 'CEO');
+-- Nivel 2: Directores (reportan al CEO)
+INSERT INTO empleados VALUES (2, 'Ana López', 120000, 'S', 1, 'TI', 'Directora de TI');
+INSERT INTO empleados VALUES (3, 'Pedro Ramírez', 110000, 'S', 1, 'Ventas', 'Director de Ventas');
+INSERT INTO empleados VALUES (4, 'María García', 100000, 'S', 1, 'Finanzas', 'Directora Financiera');
+-- Nivel 3: Gerentes (reportan a directores)
+INSERT INTO empleados VALUES (5, 'Laura Torres', 90000, 'S', 2, 'TI', 'Gerente Desarrollo');
+INSERT INTO empleados VALUES (6, 'Roberto Sánchez', 85000, 'S', 2, 'TI', 'Gerente Infraestructura');
+INSERT INTO empleados VALUES (7, 'Sofía Chen', 80000, 'S', 3, 'Ventas', 'Gerente Ventas Nacional');
+INSERT INTO empleados VALUES (8, 'Diego Morales', 75000, 'S', 4, 'Finanzas', 'Gerente Contabilidad');
+-- Nivel 4: Team Leads y Senior (reportan a gerentes)
+INSERT INTO empleados VALUES (9, 'Elena Ruiz', 70000, 'S', 5, 'TI', 'Líder Técnico');
+INSERT INTO empleados VALUES (10, 'Javier Kim', 65000, 'S', 7, 'Ventas', 'Supervisor Ventas');
+INSERT INTO empleados VALUES (11, 'Carmen Vega', 60000, 'S', 8, 'Finanzas', 'Contador Senior');
+-- Nivel 5: Desarrollador (reporta a team lead)
+INSERT INTO empleados VALUES (12, 'David Ortiz', 55000, 'S', 9, 'TI', 'Desarrollador');
+END;
+
+WITH rec_emps (id, nombre, jefe_id, nivel) AS (
+  SELECT id, nombre, jefe_id, 1
+  FROM empleados
+  WHERE jefe_id IS NULL
+  UNION ALL
+  SELECT e.id, e.nombre, e.jefe_id, r.nivel + 1
+  FROM empleados e
+  JOIN rec_emps r ON e.jefe_id = r.id
+)

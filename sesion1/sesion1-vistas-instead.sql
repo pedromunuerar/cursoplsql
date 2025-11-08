@@ -136,28 +136,6 @@ COMMIT;
 SELECT * FROM v_empleados_detalle WHERE emp_id = 1004;
 SELECT * FROM empleados WHERE emp_id = 1004;
 
--- =============================================
--- EJERCICIO EXTRA: PRUEBAS ADICIONALES
--- =============================================
-
--- Prueba 1: Intentar insertar con departamento inexistente
-BEGIN
-    INSERT INTO v_empleados_detalle (emp_id, empleado, salario, dept_id, departamento, presupuesto)
-    VALUES (1005, 'Laura Sanchez', 55000, 99, 'DEPTO_INEXISTENTE', 100000);
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error esperado: ' || SQLERRM);
-END;
-/
-
--- Prueba 2: Insertar múltiples empleados
-INSERT INTO v_empleados_detalle VALUES (1006, 'Sofia Chen', 62000, 20, 'TI', 800000);
-INSERT INTO v_empleados_detalle VALUES (1007, 'Diego Morales', 58000, 30, 'FINANZAS', 400000);
-
-COMMIT;
-
--- Ver todos los empleados
-SELECT * FROM v_empleados_detalle ORDER BY emp_id;
 
 -- =============================================
 -- LIMPIAR (opcional)

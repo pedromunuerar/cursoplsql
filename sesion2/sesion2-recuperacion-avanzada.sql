@@ -201,18 +201,21 @@ ORDER BY empleado_id, mes;
 -- (SQL para análisis temporal o de series de eventos)
 --------------------------------------------------------------------------------
 
-SELECT empleado_id, mes, monto, patron
+SELECT *
 FROM ventas
 MATCH_RECOGNIZE (
   PARTITION BY empleado_id
   ORDER BY mes
   MEASURES
     MATCH_NUMBER() AS num_patron,
-    CLASSIFIER() AS patron
+    CLASSIFIER() AS patron,
+    FIRST(monto) AS monto_inicial,
+    LAST(monto) AS monto_final
+  ALL ROWS PER MATCH
   PATTERN (a b+)
   DEFINE
-    a AS monto < 2500,
-    b AS monto > PREV(monto)
+    a AS a.monto < 2500,
+    b AS b.monto > PREV(b.monto)
 );
 
 -- Comentario:

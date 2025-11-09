@@ -135,15 +135,28 @@ WHERE e.manager_id = m.id(+);
 -- =============================================
 
 -- Solo funciona si las columnas tienen el mismo nombre
-CREATE TABLE departamentos2 (
-    id NUMBER PRIMARY KEY,
+CREATE TABLE dept_natural (
+    id_dept NUMBER PRIMARY KEY,
     nombre VARCHAR2(50)
 );
+/
+BEGIN
+INSERT INTO dept_natural VALUES (1, 'VENTAS');
+INSERT INTO dept_natural VALUES (2, 'TI');
+END;
+/
+CREATE TABLE emp_natural (
+    id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    id_dept NUMBER  -- Mismo nombre que en dept_natural
+);
 
-INSERT INTO departamentos2 VALUES (1, 'VENTAS');
-INSERT INTO departamentos2 VALUES (2, 'TI');
-
--- Natural join (une por la columna 'id' automáticamente)
-SELECT e.nombre, d.nombre as departamento
-FROM empleados e
-NATURAL JOIN departamentos2 d;
+/
+BEGIN
+INSERT INTO emp_natural VALUES (101, 'Ana García', 1);
+INSERT INTO emp_natural VALUES (102, 'Carlos López', 2);
+END;
+/
+SELECT nombre, id_dept  -- No se pueden usar e.nombre o d.nombre
+FROM emp_natural 
+NATURAL JOIN dept_natural;

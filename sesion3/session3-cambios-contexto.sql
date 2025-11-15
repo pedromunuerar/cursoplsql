@@ -5,7 +5,7 @@ CREATE GLOBAL TEMPORARY TABLE temp_employees (
 
 -- Insertar datos de ejemplo
 INSERT INTO temp_employees 
-SELECT LEVEL * 1000 FROM DUAL CONNECT BY LEVEL <= 10000;
+SELECT LEVEL * 100 FROM DUAL CONNECT BY LEVEL <= 400000;
 
 COMMIT;
 
@@ -37,7 +37,3 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('SIN CAMBIOS: ' || (SYSTIMESTAMP - v_start));
     DBMS_OUTPUT.PUT_LINE('Total: ' || v_total);
 END;
-/
-
--- Limpiar
-DROP TABLE temp_employees;

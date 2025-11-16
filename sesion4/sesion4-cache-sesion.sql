@@ -50,3 +50,6 @@ BEGIN
 END;
 
 SELECT SYS_CONTEXT('USERENV', 'SESSIONID')  FROM DUAL;
+
+select contexto_usuario.get_usuario_nombre()
+from dual;

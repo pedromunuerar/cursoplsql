@@ -48,3 +48,5 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Usuario actual: ' || contexto_usuario.get_usuario_nombre());
     -- Output: Usuario actual: María García
 END;
+
+SELECT SYS_CONTEXT('USERENV', 'SESSIONID')  FROM DUAL;

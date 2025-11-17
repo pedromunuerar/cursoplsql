@@ -1,21 +1,29 @@
---1. Crear función con UDF
-CREATE OR REPLACE FUNCTION duplicar_udf(n NUMBER) RETURN NUMBER IS
-    PRAGMA UDF;  -- ¡Solo esta línea la hace UDF!
+--1. Función compleja con UDF
+CREATE OR REPLACE FUNCTION no_det_udf(n NUMBER) RETURN NUMBER IS
+    PRAGMA UDF;
 BEGIN
-    RETURN n * 2;
+    -- Usar SYSDATE hace que no sea determinística
+    RETURN n * DBMS_RANDOM.VALUE(1, 10) + (SYSDATE - TRUNC(SYSDATE));
 END;
 /
---2. Crear función normal (para comparar)
-CREATE OR REPLACE FUNCTION duplicar_normal(n NUMBER) RETURN NUMBER IS
+
+CREATE OR REPLACE FUNCTION no_det_normal(n NUMBER) RETURN NUMBER IS
 BEGIN
-    RETURN n * 2;
+    RETURN n * DBMS_RANDOM.VALUE(1, 10) + (SYSDATE - TRUNC(SYSDATE));
 END;
 /
---3. Probar en SQL (donde UDF es más rápido)
--- Comparar rendimiento en consulta SQL
+--3. Probar con MUCHAS iteraciones
+
 SET TIMING ON
 
-SELECT duplicar_udf(LEVEL) FROM DUAL CONNECT BY LEVEL <= 100000;    -- Rápido
-SELECT duplicar_normal(LEVEL) FROM DUAL CONNECT BY LEVEL <= 100000; -- Lento
+-- UDF (más rápido en SQL)
+SELECT  sum(salida) FROM (
+    SELECT no_det_udf(LEVEL) as salida FROM DUAL CONNECT BY LEVEL <= 1000000
+);
+
+-- Normal (más lento en SQL)  
+SELECT  sum(salida) FROM (
+    SELECT no_det_normal(LEVEL) as salida FROM DUAL CONNECT BY LEVEL <= 1000000
+);
 
 SET TIMING OFF

@@ -1,0 +1,147 @@
+-- Crear tabla temporal
+CREATE GLOBAL TEMPORARY TABLE temp_employees (
+    salary NUMBER
+) ON COMMIT PRESERVE ROWS;
+
+-- Insertar datos de ejemplo
+INSERT INTO temp_employees 
+SELECT LEVEL * 100 FROM DUAL CONNECT BY LEVEL <= 400000;
+
+COMMIT;
+
+SELECT 
+    s.sid,
+    s.serial#,
+    s.username,
+    s.program,
+    p.pga_used_mem/1024/1024 as pga_used_mb,
+    p.pga_alloc_mem/1024/1024 as pga_alloc_mb,
+    p.pga_freeable_mem/1024/1024 as pga_freeable_mb,
+    p.pga_max_mem/1024/1024 as pga_max_mb
+FROM v$session s
+JOIN v$process p ON s.paddr = p.addr
+WHERE s.username = USER  -- Usuario actual
+   OR s.sid = SYS_CONTEXT('USERENV','SID');
+
+--------------------------------------------------------------------
+DECLARE
+    v_total NUMBER := 0;
+    v_start TIMESTAMP;
+BEGIN
+    v_start := SYSTIMESTAMP;
+    
+    FOR r IN (SELECT salary FROM temp_employees) LOOP
+        v_total := v_total + r.salary;
+    END LOOP;
+    
+    DBMS_OUTPUT.PUT_LINE('SIN BULK: ' || (SYSTIMESTAMP - v_start));
+    DBMS_OUTPUT.PUT_LINE('Total: ' || v_total);
+END;
+/
+--------------------------------------------------------------------
+
+
+DECLARE
+    v_total NUMBER := 0;
+    v_start TIMESTAMP;
+    TYPE t_salary_tab IS TABLE OF temp_employees.salary%TYPE;
+    l_salaries t_salary_tab;
+    
+    PROCEDURE mostrar_pga(p_etapa VARCHAR2) IS
+        v_pga_used NUMBER;
+        v_pga_alloc NUMBER;
+        v_pga_max NUMBER;
+    BEGIN
+        SELECT 
+            p.pga_used_mem/1024/1024,
+            p.pga_alloc_mem/1024/1024,
+            p.pga_max_mem/1024/1024
+        INTO 
+            v_pga_used,
+            v_pga_alloc,
+            v_pga_max
+        FROM v$session s
+        JOIN v$process p ON s.paddr = p.addr
+        WHERE s.sid = SYS_CONTEXT('USERENV','SID');
+        
+        DBMS_OUTPUT.PUT_LINE('PGA ' || p_etapa || ':');
+        DBMS_OUTPUT.PUT_LINE('  Usada: ' || ROUND(v_pga_used, 2) || ' MB');
+        DBMS_OUTPUT.PUT_LINE('  Asignada: ' || ROUND(v_pga_alloc, 2) || ' MB');
+        DBMS_OUTPUT.PUT_LINE('  Máxima: ' || ROUND(v_pga_max, 2) || ' MB');
+        DBMS_OUTPUT.PUT_LINE('---');
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error al leer PGA: ' || SQLERRM);
+    END mostrar_pga;
+    
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== BULK COLLECTION COMPLETO ===');
+    v_start := SYSTIMESTAMP;
+    
+    mostrar_pga('Antes de BULK COLLECT');
+    
+    SELECT salary BULK COLLECT INTO l_salaries FROM temp_employees;
+    
+    mostrar_pga('Despues de BULK COLLECT');
+    
+    FOR i IN 1..l_salaries.COUNT LOOP
+        v_total := v_total + l_salaries(i);
+    END LOOP;
+    
+    DBMS_OUTPUT.PUT_LINE('BULK COMPLETO: ' || (SYSTIMESTAMP - v_start));
+    DBMS_OUTPUT.PUT_LINE('Total: ' || v_total);
+    mostrar_pga('Final');
+END;
+/
+--------------------------------------------------------------------
+
+DECLARE
+    v_total NUMBER := 0;
+    v_start TIMESTAMP;
+    TYPE t_salary_tab IS TABLE OF temp_employees.salary%TYPE;
+    l_salaries t_salary_tab;
+    CURSOR c_salaries IS SELECT salary FROM temp_employees;
+    PROCEDURE mostrar_pga(p_etapa VARCHAR2) IS
+        v_pga_used NUMBER;
+        v_pga_alloc NUMBER;
+        v_pga_max NUMBER;
+    BEGIN
+        SELECT 
+            p.pga_used_mem/1024/1024,
+            p.pga_alloc_mem/1024/1024,
+            p.pga_max_mem/1024/1024
+        INTO 
+            v_pga_used,
+            v_pga_alloc,
+            v_pga_max
+        FROM v$session s
+        JOIN v$process p ON s.paddr = p.addr
+        WHERE s.sid = SYS_CONTEXT('USERENV','SID');
+        
+        DBMS_OUTPUT.PUT_LINE('PGA ' || p_etapa || ':');
+        DBMS_OUTPUT.PUT_LINE('  Usada: ' || ROUND(v_pga_used, 2) || ' MB');
+        DBMS_OUTPUT.PUT_LINE('  Asignada: ' || ROUND(v_pga_alloc, 2) || ' MB');
+        DBMS_OUTPUT.PUT_LINE('  Máxima: ' || ROUND(v_pga_max, 2) || ' MB');
+        DBMS_OUTPUT.PUT_LINE('---');
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error al leer PGA: ' || SQLERRM);
+    END mostrar_pga;
+BEGIN
+    v_start := SYSTIMESTAMP;
+    mostrar_pga('Antes de BULK COLLECT');
+    OPEN c_salaries;
+    LOOP
+        FETCH c_salaries BULK COLLECT INTO l_salaries LIMIT 1000;
+        EXIT WHEN l_salaries.COUNT = 0;
+         mostrar_pga('Durante')
+        FOR i IN 1..l_salaries.COUNT LOOP
+            v_total := v_total + l_salaries(i);
+        END LOOP;
+    END LOOP;
+    CLOSE c_salaries;
+    mostrar_pga('Durante')
+    DBMS_OUTPUT.PUT_LINE('BULK LIMITADO (1000): ' || (SYSTIMESTAMP - v_start));
+    DBMS_OUTPUT.PUT_LINE('Total: ' || v_total);
+END;
+/

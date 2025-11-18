@@ -54,7 +54,12 @@ SET TIMING ON
 SELECT SUM(importe)
 FROM ventas_flash;
 
+-----------------------------------
+SHOW PARAMETER flash;
+
 SET TIMING OFF
 
 
 --Mide estadísticas otra vez.
+ALTER TABLE ventas_flash STORAGE (BUFFER_POOL KEEP);
+--Creo que no termina de funcionar por que ya esta optimizando

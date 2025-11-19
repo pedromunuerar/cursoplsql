@@ -76,3 +76,45 @@ SELECT DISTINCT
 FROM PERSONAL_ACTIVO pa
 JOIN puestos_filtrados pf
     ON pa.DAL_PLL_CODIGO2 = pf.PUF_CODIGO;
+/
+EXPLAIN PLAN FOR
+WITH puestos_filtrados AS (
+    SELECT 
+        puf.PUF_CODIGO,
+        puf.PUF_DEFP_CODIGO,
+        puf.PUF_FECHAFIN,
+        d.DEP_CODIGO
+    FROM PUESTO_FUNCIONARIOS puf
+    JOIN DEPARTAMENTOS d
+        ON d.DEP_CODIGO = puf.PUF_DEP_CODIGO
+    WHERE puf.PUF_FECHAFIN = DATE '3999-12-31'
+      AND puf.PUF_DEFP_CODIGO = '15'
+      AND d.DEP_DOCENTE = 'S'
+),
+dni_filtrado AS (
+    SELECT DISTINCT hdl_dap_dni AS dni
+    FROM historico_datos_laborales h
+    JOIN puestos_filtrados pf
+         ON SUBSTR(h.hdl_valor_del_campo, 1, 7) = pf.PUF_CODIGO
+    WHERE h.hdl_tca_codigo IN (
+            'DAL_PUF_CODIGO1',
+            'DAL_PUF_CODIGO2',
+            'DAL_PLL_CODIGO1',
+            'DAL_PLL_CODIGO2'
+        )
+      AND h.hdl_fechaini <= TRUNC(SYSDATE)
+      AND h.hdl_fechafin >= TRUNC(SYSDATE)
+)
+SELECT pa.*, pf.*
+FROM PERSONAL_ACTIVO pa
+JOIN dni_filtrado f
+    ON f.dni = pa.DAP_DNI
+JOIN puestos_filtrados pf
+    ON pf.PUF_CODIGO IN (
+        pa.DAL_PUF_CODIGO1,
+        pa.DAL_PUF_CODIGO2,
+        pa.DAL_PLL_CODIGO1,
+        pa.DAL_PLL_CODIGO2
+    );
+    
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY); 

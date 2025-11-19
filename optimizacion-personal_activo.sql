@@ -250,3 +250,79 @@ Predicate Information (identified by operation id):
 Note
 -----
    - this is an adaptive plan
+
+
+
+ 
+         
+--EXPLAIN PLAN FOR          --2351
+CREATE FORCE EDITIONABLE VIEW "UMDP"."PERSONAL_ACTIVO_OPT" ("DAP_DNI", "DAP_NOMBRE", "DAP_APELLID", "DAP_SEXO", "DAP_DIR_CODIGO", "DAL_DEP_CODIGO", "DAL_CED_CODIGO", "DAL_SED_CODIGO", "DAL_ACM_CODIGO", "DAL_ACP_CODIGO", "DAL_CAT_CODIGO", "DAL_PUF_CODIGO1", "DAL_PUF_CODIGO2", "DAL_PLL_CODIGO1", "DAL_PLL_CODIGO2", "DAL_CAA_CODIGO", "DAL_SAP_CODIGO", "DAL_DEP_CODIGO2") AS 
+WITH /*+ MATERIALIZE */
+h AS (
+    SELECT
+        hdl_dap_dni,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_DEP_CODIGO'  THEN hdl_valor_del_campo END) AS dal_dep_codigo,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_CED_CODIGO'  THEN hdl_valor_del_campo END) AS dal_ced_codigo,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_SED_CODIGO'  THEN hdl_valor_del_campo END) AS dal_sed_codigo,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_ACM_CODIGO'  THEN hdl_valor_del_campo END) AS dal_acm_codigo,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_ACP_CODIGO'  THEN hdl_valor_del_campo END) AS dal_acp_codigo,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_CAT_CODIGO'  THEN hdl_valor_del_campo END) AS dal_cat_codigo,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_PUF_CODIGO1' THEN hdl_valor_del_campo END) AS dal_puf_codigo1,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_PUF_CODIGO2' THEN hdl_valor_del_campo END) AS dal_puf_codigo2,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_PLL_CODIGO1' THEN hdl_valor_del_campo END) AS dal_pll_codigo1,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_PLL_CODIGO2' THEN hdl_valor_del_campo END) AS dal_pll_codigo2,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_CAA_CODIGO'  THEN hdl_valor_del_campo END) AS dal_caa_codigo,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_SAP_CODIGO'  THEN hdl_valor_del_campo END) AS dal_sap_codigo,
+        MAX(CASE WHEN hdl_tca_codigo = 'DAL_DEP_CODIGO2' THEN hdl_valor_del_campo END) AS dal_dep_codigo2
+    FROM umdp.historico_datos_laborales
+    WHERE hdl_fechaini <= TRUNC(SYSDATE)
+      AND hdl_fechafin >= TRUNC(SYSDATE)
+    GROUP BY hdl_dap_dni
+)
+SELECT
+    x.dap_dni,
+    afi.afi_nombre      AS dap_nombre,
+    afi.afi_apellidos   AS dap_apellid,
+    afi.afi_sexo        AS dap_sexo,
+    x.dap_dir_codigo,
+    h.dal_dep_codigo,
+    h.dal_ced_codigo,
+    h.dal_sed_codigo,
+    h.dal_acm_codigo,
+    h.dal_acp_codigo,
+    h.dal_cat_codigo,
+    h.dal_puf_codigo1,
+    h.dal_puf_codigo2,
+    h.dal_pll_codigo1,
+    h.dal_pll_codigo2,
+    h.dal_caa_codigo,
+    h.dal_sap_codigo,
+    h.dal_dep_codigo2
+FROM umdp.datos_personales x
+JOIN afiliaciones afi
+       ON afi.afi_identificador = x.dap_dni
+JOIN indice_documentos ind
+       ON ind.ind_dni_personal = x.dap_dni
+JOIN h
+       ON h.hdl_dap_dni = ind.ind_dni_laboral
+JOIN umdp.historico_datos_laborales h_sap
+       ON h_sap.hdl_dap_dni = ind.ind_dni_laboral
+      AND h_sap.hdl_tca_codigo = 'DAL_SAP_CODIGO'
+      AND h_sap.hdl_fechaini <= TRUNC(SYSDATE)
+      AND h_sap.hdl_fechafin >= TRUNC(SYSDATE)
+JOIN umdp.situacion_admin_personals z
+       ON z.sap_codigo = h_sap.hdl_valor_del_campo
+      AND z.sap_activo = 'S';
+ 
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);    --2351
+/
+
+select  * from PERSONAL_ACTIVO_OPT where dal_dep_codigo='E098';
+
+select  * from PERSONAL_ACTIVO where dal_dep_codigo='E098';
+
+
+select  * from PERSONAL_ACTIVO_OPT where dal_cat_codigo='DAL12' order by DAP_APELLID;
+
+select  * from PERSONAL_ACTIVO where dal_cat_codigo='DAL12' order by DAP_APELLID;
